@@ -38,6 +38,7 @@ public class VfxFrameBufferPool implements Disposable {
     private int width;
     private int height;
     private Pixmap.Format pixelFormat;
+    private final boolean depthEnabled;
 
     private Texture.TextureWrap textureWrapU = Texture.TextureWrap.ClampToEdge;
     private Texture.TextureWrap textureWrapV = Texture.TextureWrap.ClampToEdge;
@@ -47,13 +48,14 @@ public class VfxFrameBufferPool implements Disposable {
     private boolean disposed = false;
 
     public VfxFrameBufferPool() {
-        this(Pixmap.Format.RGBA8888, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), 16);
+        this(Pixmap.Format.RGBA8888, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), 16, false);
     }
 
-    public VfxFrameBufferPool(Pixmap.Format pixelFormat, int width, int height, int initialCapacity) {
+    public VfxFrameBufferPool(Pixmap.Format pixelFormat, int width, int height, int initialCapacity, boolean depthEnabled) {
         this.width = width;
         this.height = height;
         this.pixelFormat = pixelFormat;
+        this.depthEnabled = depthEnabled;
 
         this.managedBuffers = new Array<>(false, initialCapacity);
         this.freeBuffers = new Array<>(false, initialCapacity);
@@ -131,7 +133,7 @@ public class VfxFrameBufferPool implements Disposable {
 
     protected VfxFrameBuffer createBuffer() {
         VfxFrameBuffer buffer = new VfxFrameBuffer(pixelFormat);
-        buffer.initialize(width, height);
+        buffer.initialize(width, height, depthEnabled);
         managedBuffers.add(buffer);
         return buffer;
     }
@@ -167,7 +169,7 @@ public class VfxFrameBufferPool implements Disposable {
                     managedBuffers.removeValue(buffer, true);
                     buffer.dispose();
                 } else {
-                    buffer.initialize(width, height);
+                    buffer.initialize(width, height, depthEnabled);
                 }
             }
         }
@@ -188,5 +190,9 @@ public class VfxFrameBufferPool implements Disposable {
             texture.setWrap(textureWrapU, textureWrapV);
             texture.setFilter(textureFilterMin, textureFilterMag);
         }
+    }
+
+    public boolean isDepthEnabled() {
+        return depthEnabled;
     }
 }

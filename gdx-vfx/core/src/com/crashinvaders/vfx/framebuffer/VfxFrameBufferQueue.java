@@ -32,11 +32,13 @@ public class VfxFrameBufferQueue implements Disposable {
     private Texture.TextureWrap wrapV = Texture.TextureWrap.ClampToEdge;
     private Texture.TextureFilter filterMin = Texture.TextureFilter.Nearest;
     private Texture.TextureFilter filterMag = Texture.TextureFilter.Nearest;
+    private final boolean depthEnabled;
 
-    public VfxFrameBufferQueue(Pixmap.Format pixelFormat, int fboAmount) {
+    public VfxFrameBufferQueue(Pixmap.Format pixelFormat, int fboAmount, boolean depthEnabled) {
         if (fboAmount < 1) {
             throw new IllegalArgumentException("FBO amount should be a positive number.");
         }
+        this.depthEnabled = depthEnabled;
         buffers = new Array<>(true, fboAmount);
         for (int i = 0; i < fboAmount; i++) {
             buffers.add(new VfxFrameBuffer(pixelFormat));
@@ -53,7 +55,7 @@ public class VfxFrameBufferQueue implements Disposable {
 
     public void resize(int width, int height) {
         for (int i = 0; i < buffers.size; i++) {
-            buffers.get(i).initialize(width, height);
+            buffers.get(i).initialize(width, height, depthEnabled);
         }
     }
 

@@ -98,13 +98,13 @@ public class VfxFrameBuffer implements Disposable {
         reset();
     }
 
-    public void initialize(int width, int height) {
+    public void initialize(int width, int height, boolean depthEnabled) {
         if (initialized) { dispose(); }
 
         initialized = true;
 
         int boundFboHandle = getBoundFboHandle();
-        fbo = new FrameBuffer(pixelFormat, width, height, false);
+        fbo = new FrameBuffer(pixelFormat, width, height, depthEnabled);
         fbo.getColorBufferTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         Gdx.gl20.glBindFramebuffer(GL20.GL_FRAMEBUFFER, boundFboHandle);
 

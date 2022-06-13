@@ -63,16 +63,26 @@ public final class VfxManager implements Disposable {
     private boolean blendingEnabled = false;
 
     private int width, height;
+    private final boolean depthEnabled;
 
     public VfxManager(Format fboFormat) {
         this(fboFormat, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
     }
 
+    public VfxManager(Format fboFormat, boolean depthEnabled) {
+        this(fboFormat, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), depthEnabled);
+    }
+
     public VfxManager(Format fboFormat, int bufferWidth, int bufferHeight) {
+        this(fboFormat, bufferWidth, bufferHeight, false);
+    }
+
+    public VfxManager(Format fboFormat, int bufferWidth, int bufferHeight, boolean depthEnabled) {
         this.width = bufferWidth;
         this.height = bufferHeight;
+        this.depthEnabled = depthEnabled;
 
-        this.context = new VfxRenderContext(fboFormat, bufferWidth, bufferHeight);
+        this.context = new VfxRenderContext(fboFormat, bufferWidth, bufferHeight, depthEnabled);
 
         // VfxFrameBufferPool will manage both ping-pong VfxFrameBuffer instances for us.
         this.pingPongWrapper = new VfxPingPongWrapper(context.getBufferPool());
@@ -281,8 +291,10 @@ public final class VfxManager implements Disposable {
             Gdx.gl.glEnable(GL20.GL_BLEND);
         }
 
-        Gdx.gl.glDisable(GL20.GL_CULL_FACE);
-        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+        if (!depthEnabled) {
+            Gdx.gl.glDisable(GL20.GL_CULL_FACE);
+            Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+        }
 
         pingPongWrapper.swap(); // Swap buffers to get the input buffer in the src buffer.
         pingPongWrapper.begin();

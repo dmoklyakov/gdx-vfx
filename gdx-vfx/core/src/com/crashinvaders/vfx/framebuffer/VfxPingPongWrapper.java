@@ -37,7 +37,7 @@ import com.badlogic.gdx.utils.Pool;
  * <p>
  *
  * {@link VfxPingPongWrapper} only wraps to provided buffers but doesn't manage them.
- * So it's your responsibility to call {@link VfxFrameBuffer#initialize(int, int)} and {@link VfxFrameBuffer#dispose()} for them.
+ * So it's your responsibility to call {@link VfxFrameBuffer#initialize(int, int, boolean)} and {@link VfxFrameBuffer#dispose()} for them.
  * <br/>
  * You also may use the benefits of {@link VfxFrameBufferPool} if you have one
  * (all the {@link com.crashinvaders.vfx.effects.ChainVfxEffect} have access to one from {@link com.crashinvaders.vfx.VfxRenderContext}).
@@ -189,9 +189,9 @@ public class VfxPingPongWrapper implements Pool.Poolable {
         if (!wasCapturing) { begin(); }
 
         Gdx.gl.glClearColor(r, g, b, a);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | (bufferPool.isDepthEnabled() ? GL20.GL_DEPTH_BUFFER_BIT : 0));
         swap();
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | (bufferPool.isDepthEnabled() ? GL20.GL_DEPTH_BUFFER_BIT : 0));
 
         if (!wasCapturing) { end(); }
     }

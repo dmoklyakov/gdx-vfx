@@ -31,24 +31,20 @@ import com.crashinvaders.vfx.framebuffer.VfxFrameBufferQueue;
  * The result is then stored as the next last frame to create the trail effect. */
 public class MotionBlurEffect extends CompositeVfxEffect implements ChainVfxEffect {
 
+	private final Pixmap.Format pixelFormat;
 	private final MixEffect mixFilter;
 	private final CopyEffect copyFilter;
 
-	private final VfxFrameBufferQueue localBuffer;
+	private VfxFrameBufferQueue localBuffer;
 
 	private boolean firstFrameRendered = false;
 
 	public MotionBlurEffect(Pixmap.Format pixelFormat, MixEffect.Method mixMethod, float blurFactor) {
+		this.pixelFormat = pixelFormat;
 		mixFilter = register(new MixEffect(mixMethod));
 		mixFilter.setMixFactor(blurFactor);
 
 		copyFilter = register(new CopyEffect());
-
-		localBuffer = new VfxFrameBufferQueue(pixelFormat,
-				// On WebGL (GWT) we cannot render from/into the same texture simultaneously.
-				// Will use ping-pong approach to avoid "writing into itself".
-				Gdx.app.getType() == Application.ApplicationType.WebGL ? 2 : 1
-		);
 	}
 
 	@Override
@@ -72,15 +68,23 @@ public class MotionBlurEffect extends CompositeVfxEffect implements ChainVfxEffe
 
 	@Override
 	public void render(VfxRenderContext context, VfxPingPongWrapper buffers) {
-		VfxFrameBuffer prevFrame = this.localBuffer.changeToNext();
+		VfxFrameBuffer prevFrame;
 		if (!firstFrameRendered) {
+			localBuffer = new VfxFrameBufferQueue(
+					pixelFormat,
+					// On WebGL (GWT) we cannot render from/into the same texture simultaneously.
+					// Will use ping-pong approach to avoid "writing into itself".
+					Gdx.app.getType() == Application.ApplicationType.WebGL ? 2 : 1,
+					context.isDepthEnabled()
+			);
+			prevFrame = this.localBuffer.changeToNext();
 			// Mix filter requires two frames to render, so we gonna skip the first call.
 			copyFilter.render(context, buffers.getSrcBuffer(), prevFrame);
 			buffers.swap();
 			firstFrameRendered = true;
 			return;
 		}
-
+		prevFrame = this.localBuffer.changeToNext();
 		mixFilter.render(context, buffers.getSrcBuffer(), prevFrame, buffers.getDstBuffer());
 		copyFilter.render(context, buffers.getDstBuffer(), prevFrame);
 	}
