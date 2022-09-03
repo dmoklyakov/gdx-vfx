@@ -24,46 +24,19 @@ import com.crashinvaders.vfx.gl.VfxGLUtils;
 
 public class GaussianBlurEffect extends AbstractVfxEffect implements ChainVfxEffect {
 
-    private enum Tap {
-        Tap3x3(1),
-        Tap5x5(2),
-        // Tap7x7(3),
-        ;
-
-        public final int radius;
-
-        Tap(int radius) {
-            this.radius = radius;
-        }
-    }
-
-    public enum BlurType {
-        Gaussian3x3(Tap.Tap3x3),
-        Gaussian3x3b(Tap.Tap3x3), // R=5 (11x11, policy "higher-then-discard")
-        Gaussian5x5(Tap.Tap5x5),
-        Gaussian5x5b(Tap.Tap5x5), // R=9 (19x19, policy "higher-then-discard")
-        ;
-
-        public final Tap tap;
-
-        BlurType(Tap tap) {
-            this.tap = tap;
-        }
-    }
-
-    private BlurType type;
     private float amount = 1f;
     private int passes = 1;
+    private int radius = 3;
 
     private float invWidth, invHeight;
     private Convolve2DEffect convolve;
 
     public GaussianBlurEffect() {
-        this(BlurType.Gaussian5x5);
+        this(3);
     }
 
-    public GaussianBlurEffect(BlurType blurType) {
-        this.setType(blurType);
+    public GaussianBlurEffect(int radius) {
+        this.setRadius(radius);
     }
 
     @Override
@@ -102,22 +75,22 @@ public class GaussianBlurEffect extends AbstractVfxEffect implements ChainVfxEff
         // Do nothing.
     }
 
-    public BlurType getType() {
-        return type;
+    public int getRadius() {
+        return radius;
     }
 
-    public void setType(BlurType type) {
-        if (type == null) {
-            throw new IllegalArgumentException("Blur type cannot be null.");
+    public void setRadius(int radius) {
+        if (radius < 0) {
+            throw new IllegalArgumentException("Radius cannot be negative.");
         }
-        if (this.type != type) {
-            this.type = type;
+        if (this.radius != radius) {
+            this.radius = radius;
 
             // Instantiate new matching convolve filter instance.
             if (convolve != null) {
                 convolve.dispose();
             }
-            convolve = new Convolve2DEffect(this.type.tap.radius);
+            convolve = new Convolve2DEffect(this.radius);
 
             computeBlurWeightings();
         }
@@ -151,98 +124,8 @@ public class GaussianBlurEffect extends AbstractVfxEffect implements ChainVfxEff
         float[] outOffsetsH = convolve.getOffsetsHor();
         float[] outOffsetsV = convolve.getOffsetsVert();
 
-        float dx = this.invWidth;
-        float dy = this.invHeight;
-
-        switch (this.type) {
-            case Gaussian3x3:
-            case Gaussian5x5:
-                computeKernel(this.type.tap.radius, this.amount, outWeights);
-                computeOffsets(this.type.tap.radius, this.invWidth, this.invHeight, outOffsetsH, outOffsetsV);
-                break;
-
-            case Gaussian3x3b:
-                // Weights and offsets are computed from a binomial distribution
-                // and reduced to be used *only* with bilinearly-filtered texture lookups
-                // with radius = 1f
-
-                // Weights
-                outWeights[0] = 0.352941f;
-                outWeights[1] = 0.294118f;
-                outWeights[2] = 0.352941f;
-
-                // Horizontal offsets
-                outOffsetsH[0] = -1.33333f;
-                outOffsetsH[1] = 0f;
-                outOffsetsH[2] = 0f;
-                outOffsetsH[3] = 0f;
-                outOffsetsH[4] = 1.33333f;
-                outOffsetsH[5] = 0f;
-
-                // Vertical offsets
-                outOffsetsV[0] = 0f;
-                outOffsetsV[1] = -1.33333f;
-                outOffsetsV[2] = 0f;
-                outOffsetsV[3] = 0f;
-                outOffsetsV[4] = 0f;
-                outOffsetsV[5] = 1.33333f;
-
-                // Scale offsets from binomial space to screen space
-                for (int i = 0; i < convolve.getLength() * 2; i++) {
-                    outOffsetsH[i] *= dx;
-                    outOffsetsV[i] *= dy;
-                }
-
-                break;
-
-            case Gaussian5x5b:
-
-                // Weights and offsets are computed from a binomial distribution
-                // and reduced to be used *only* with bilinearly-filtered texture lookups
-                // with radius = 2f
-
-                // weights
-                outWeights[0] = 0.0702703f;
-                outWeights[1] = 0.316216f;
-                outWeights[2] = 0.227027f;
-                outWeights[3] = 0.316216f;
-                outWeights[4] = 0.0702703f;
-
-                // Horizontal offsets
-                outOffsetsH[0] = -3.23077f;
-                outOffsetsH[1] = 0f;
-                outOffsetsH[2] = -1.38462f;
-                outOffsetsH[3] = 0f;
-                outOffsetsH[4] = 0f;
-                outOffsetsH[5] = 0f;
-                outOffsetsH[6] = 1.38462f;
-                outOffsetsH[7] = 0f;
-                outOffsetsH[8] = 3.23077f;
-                outOffsetsH[9] = 0f;
-
-                // Vertical offsets
-                outOffsetsV[0] = 0f;
-                outOffsetsV[1] = -3.23077f;
-                outOffsetsV[2] = 0f;
-                outOffsetsV[3] = -1.38462f;
-                outOffsetsV[4] = 0f;
-                outOffsetsV[5] = 0f;
-                outOffsetsV[6] = 0f;
-                outOffsetsV[7] = 1.38462f;
-                outOffsetsV[8] = 0f;
-                outOffsetsV[9] = 3.23077f;
-
-                // Scale offsets from binomial space to screen space
-                for (int i = 0; i < convolve.getLength() * 2; i++) {
-                    outOffsetsH[i] *= dx;
-                    outOffsetsV[i] *= dy;
-                }
-
-                break;
-            default:
-                hasData = false;
-                break;
-        }
+        computeKernel(this.radius, this.amount, outWeights);
+        computeOffsets(this.radius, this.invWidth, this.invHeight, outOffsetsH, outOffsetsV);
 
         if (hasData) {
             convolve.rebind();

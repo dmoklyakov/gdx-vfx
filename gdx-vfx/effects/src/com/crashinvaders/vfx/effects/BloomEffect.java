@@ -20,7 +20,6 @@ package com.crashinvaders.vfx.effects;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.crashinvaders.vfx.VfxRenderContext;
-import com.crashinvaders.vfx.effects.GaussianBlurEffect.BlurType;
 import com.crashinvaders.vfx.effects.util.CombineEffect;
 import com.crashinvaders.vfx.effects.util.CopyEffect;
 import com.crashinvaders.vfx.effects.util.GammaThresholdEffect;
@@ -162,12 +161,12 @@ public class BloomEffect extends CompositeVfxEffect implements ChainVfxEffect {
         this.blending = false;
     }
 
-    public BlurType getBlurType() {
-        return blur.getType();
+    public int getRadius() {
+        return blur.getRadius();
     }
 
-    public void setBlurType(BlurType type) {
-        blur.setType(type);
+    public void setBlurRadius(int radius) {
+        blur.setRadius(radius);
     }
 
     public void applySettings(Settings settings) {
@@ -183,12 +182,12 @@ public class BloomEffect extends CompositeVfxEffect implements ChainVfxEffect {
         // Setup blur filter
         setBlurPasses(settings.blurPasses);
         setBlurAmount(settings.blurAmount);
-        setBlurType(settings.blurType);
+        setBlurRadius(settings.blurRadius);
     }
 
     public static class Settings {
 
-        public final BlurType blurType;
+        public final int blurRadius;
         public final int blurPasses;
         public final float blurAmount;
         public final float bloomThreshold;
@@ -200,14 +199,14 @@ public class BloomEffect extends CompositeVfxEffect implements ChainVfxEffect {
 
         public Settings(int blurPasses, float bloomThreshold, float baseIntensity, float baseSaturation,
                         float bloomIntensity, float bloomSaturation) {
-            this(BlurType.Gaussian5x5b, blurPasses, 0, bloomThreshold, baseIntensity, baseSaturation,
+            this(5, blurPasses, 0, bloomThreshold, baseIntensity, baseSaturation,
                     bloomIntensity,
                     bloomSaturation);
         }
 
-        public Settings(BlurType blurType, int blurPasses, float blurAmount, float bloomThreshold,
+        public Settings(int blurRadius, int blurPasses, float blurAmount, float bloomThreshold,
                         float baseIntensity, float baseSaturation, float bloomIntensity, float bloomSaturation) {
-            this.blurType = blurType;
+            this.blurRadius = blurRadius;
             this.blurPasses = blurPasses;
             this.blurAmount = blurAmount;
 
@@ -219,7 +218,7 @@ public class BloomEffect extends CompositeVfxEffect implements ChainVfxEffect {
         }
 
         public Settings(Settings other) {
-            this.blurType = other.blurType;
+            this.blurRadius = other.blurRadius;
             this.blurPasses = other.blurPasses;
             this.blurAmount = other.blurAmount;
 
