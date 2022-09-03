@@ -88,6 +88,7 @@ public class VfxFrameBuffer implements Disposable {
     private FrameBuffer fbo = null;
     private boolean initialized;
     private boolean drawing;
+    private boolean hasDepth;
 
     public VfxFrameBuffer(Pixmap.Format pixelFormat) {
         this.pixelFormat = pixelFormat;
@@ -108,6 +109,7 @@ public class VfxFrameBuffer implements Disposable {
         initialized = true;
 
         int boundFboHandle = getBoundFboHandle();
+        this.hasDepth = depthEnabled;
         fbo = new FrameBuffer(pixelFormat, width, height, depthEnabled);
         fbo.getColorBufferTexture().setFilter(minFilter, magFilter);
         Gdx.gl20.glBindFramebuffer(GL20.GL_FRAMEBUFFER, boundFboHandle);
@@ -146,6 +148,10 @@ public class VfxFrameBuffer implements Disposable {
     /** @return true means {@link VfxFrameBuffer#begin()} has been called */
     public boolean isDrawing() {
         return drawing;
+    }
+
+    public boolean hasDepth() {
+        return hasDepth;
     }
 
     public void addRenderer(Renderer renderer) {
