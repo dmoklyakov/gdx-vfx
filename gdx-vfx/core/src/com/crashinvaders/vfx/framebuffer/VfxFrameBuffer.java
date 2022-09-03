@@ -99,13 +99,17 @@ public class VfxFrameBuffer implements Disposable {
     }
 
     public void initialize(int width, int height, boolean depthEnabled) {
+        initialize(width, height, depthEnabled, Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+    }
+
+    public void initialize(int width, int height, boolean depthEnabled, Texture.TextureFilter minFilter, Texture.TextureFilter magFilter) {
         if (initialized) { dispose(); }
 
         initialized = true;
 
         int boundFboHandle = getBoundFboHandle();
         fbo = new FrameBuffer(pixelFormat, width, height, depthEnabled);
-        fbo.getColorBufferTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        fbo.getColorBufferTexture().setFilter(minFilter, magFilter);
         Gdx.gl20.glBindFramebuffer(GL20.GL_FRAMEBUFFER, boundFboHandle);
 
         OrthographicCamera cam = tmpCam;
